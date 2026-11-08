@@ -1,0 +1,35 @@
+name: OrderFlow checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Unit and HTTP tests plus PostgreSQL and Redis Testcontainers
+        run: ./mvnw -B -ntp -Pcontainers verify
+      - name: Build Docker image
+        run: docker build -t orderflow:ci .
+      - name: Check Compose configuration
+        run: docker compose config --quiet
+        env:
+          DB_PASSWORD: ci-configuration-only-password
+          JWT_SECRET: ci-configuration-only-secret-at-least-32-bytes
+          ADMIN_EMAIL: admin@example.com
+          ADMIN_PASSWORD: ci-configuration-only-admin
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/

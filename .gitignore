@@ -1,0 +1,10 @@
+target/
+.env
+.env.*
+!.env.example
+.idea/
+*.iml
+.vscode/
+*.log
+data/
+.DS_Store
